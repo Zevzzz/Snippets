@@ -1,34 +1,52 @@
 
-# import NewsScraper as nsfrom gensim.summarization.summarizer import summarize
-from gensim.summarization import keywords
-from gensim.summarization.summarizer import summarize
-from gensim.summarization import keywordsimport nltk
+import NewsScraper as ns
+import bardapi
+bardapi.PAUSE = 0.00
+bard = bardapi.core.Bard('XQgii_FEWOt8JLZ4VdEUN-KvSm2SejKwrnhprFhGjTUP5gxuZjm9Wv3XecD0__JZU4KXYQ.')
+def getBardTitle(title, wordcount):
+    while True:
+        segment = ''
+        try:
+            text = 'Summarize the following news article title in under ' + str(wordcount) + ' words: ' + title
+            text = str(bard.get_answer(text).get('content'))
+            segment = text[text.index('\n\n') + 2:]
+            break
+        except ValueError:
+            pass
+    return segment.replace('*', '').replace('\n', '')
+def getBardContent(content, wordcount):
+    while True:
+        segment = ''
+        try:
+            text = 'Summarize the following article to about ' + str(wordcount) + ' words: ' + content
+            text = str(bard.get_answer(text).get('content'))
+            segment = text[text.index('\n\n') + 2 :]
+            break
+        except ValueError:
+            pass
+    return segment.replace('*', '').replace('\n', '')
 
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
-
-nltk.download('punkt')
-nltk.download('stopwords')
 
 
-# WORLD, NATION, BUSINESS, TECHNOLOGY, ENTERTAINMENT, SPORTS, SCIENCE, HEALTH
-from sumy.summarizers.lsa import LsaSummarizer
-summarizer_lsa = LsaSummarizer()
+def getContent(prompt, articleCount, titleLength, contentLength):
+    while True:
+        try:
+            news = ns.getNews(prompt, articleCount)
+            titles, contents = ns.getDetails(news)
 
-# Summarize using sumy LSA
-George Floyd’s killing capped years of violence, discrimination by police
-summary =summarizer_lsa("Donson was found dead shoved in a locker by percy and his bot.",30)
-lsa_summary=""
-for sentence in summary:
-    lsa_summary+=str(sentence)
-print(lsa_summary)content = "this is a very long sentence with a lot of redundant words that can be removed right now"summ_per = summarize(content, word_count = "10")
-print(summ_per)def shortenTitle(titleStr, wordCount):
-    tokens = word_tokenize(titleStr)
-    stopWords = set(stopwords.words('english'))
-    filteredTokens = [token for token in tokens if token.lower() not in stopWords]
-    shortenedTokens = filteredTokens[:wordCount]
-    shortenedTitle = ' '.join(shortenedTokens)
-    return shortenedTitle
+            cleanedTitles = []
+            cleanedContents = []
 
-print(shortenTitle('This is a long sentance with lots of many redun'))
+            for i, title in enumerate(titles):
+                cleanedTitles.append(getBardTitle(title, titleLength))
+                cleanedContents.append(getBardContent(contents[i], contentLength))
+            break
+        except:
+            print('News Request Error, trying again...')
+
+    return cleanedTitles, cleanedContents
+
+
+
+
 
